@@ -8,4 +8,4 @@ add_library(tinyNetworking SHARED net/clientThread.cpp net/clientThread.h net/pa
 set_target_properties(tinyNetworking PROPERTIES PUBLIC_HEADER "net/clientThread.h;net/packet.h;net/networkDispatcher.h;net/AbstractPacketFactory.h")
 install(TARGETS tinyNetworking
         LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
-        PUBLIC_HEADER DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}net)
+        PUBLIC_HEADER DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}")
