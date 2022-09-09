@@ -1,13 +1,5 @@
 #include "packet.h"
 
-std::string& packet::getFrom() {
-    return this->from;
-}
-
-std::string& packet::getTo() {
-    return this->to;
-}
-
 long& packet::getTimeSend() {
     return this->timeSend;
 }
@@ -20,13 +12,8 @@ nlohmann::json& packet::getData() {
     return this->data;
 }
 
-
-void packet::setFrom(const std::string &from) {
-    this->from = from;
-}
-
-void packet::setTo(const std::string &to) {
-    this->to = to;
+packetDirection& packet::getDirection() {
+    return direction;
 }
 
 void packet::setTimeSend(const long &timeSend) {
@@ -35,4 +22,8 @@ void packet::setTimeSend(const long &timeSend) {
 
 void packet::setID(int id) {
     this->id = id;
+}
+
+void packet::setDirection(packetDirection &direct) {
+    this->direction = direct;
 }

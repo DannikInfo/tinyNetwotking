@@ -3,27 +3,25 @@
 
 #include <iostream>
 #include "json.hpp"
+#include "packetDirection.h"
 
 class packet {
 protected:
-    std::string from;
-    std::string to;
     long timeSend;
     int id;
     nlohmann::json data;
+    packetDirection direction;
 public:
-    //getters
-    std::string& getFrom();
-    std::string& getTo();
+    //getters;
     long& getTimeSend();
     int getID();
     nlohmann::json& getData();
+    packetDirection& getDirection();
 
     //setters
-    void setFrom(const std::string& from);
-    void setTo(const std::string& to);
     void setTimeSend(const long& timeSend);
     void setID(int id);
+    void setDirection(packetDirection &direct);
 
     virtual void deserialize(std::string& data) =0;
     virtual void serialize() =0;

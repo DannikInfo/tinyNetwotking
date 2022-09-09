@@ -29,26 +29,26 @@
  */
 class networkDispatcher {
 private:
-    static int port, n;
+    static int sockfd, newsockfd, port, n;
     static socklen_t clilen;
     static struct sockaddr_in serv_addr, cli_addr;
     static struct hostent *server;
     static std::string hostname;
     static AbstractPacketFactory *factory;
+    static packetDirection dispatcherDirection;
 public:
+    static bool connected;
     static void setPort(int portG);
-    static void setHost(std::string &hostnameG);
+    static void setHost(const std::string &hostnameG);
     static void setFactory(AbstractPacketFactory *factoryG);
-
-    static int getSockfd();
 
     static void startListen();
     static int con();
-    static void closeCon(int sockfd, int newsockfd = -1);
-    static void send(std::unique_ptr<packet>& p, std::string &to, int sockfd);
-    static void receive(int sockfd);
-    static void sendSM(char* sm, int sockfd);
-    static bool receiveSM(char* sm, int sockfd);
+    static void closeCon();
+    static void send(std::unique_ptr<packet>& p, const std::string &to);
+    static void receive();
+    static void sendSM(char* sm);
+    static bool receiveSM(char* sm);
 };
 
 
