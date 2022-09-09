@@ -1,3 +1,8 @@
+/**
+ * original author is:
+ * https://github.com/gbytegear/TcpServer
+ */
+
 #ifndef GENERAL_H
 #define GENERAL_H
 

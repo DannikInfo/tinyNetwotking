@@ -1,3 +1,8 @@
+/**
+ * original author is:
+ * https://github.com/gbytegear/TcpServer
+ */
+
 #ifndef TCPCLIENT_H
 #define TCPCLIENT_H
 

@@ -1,3 +1,8 @@
+/**
+ * original author is:
+ * https://github.com/gbytegear/TcpServer
+ */
+
 #include "TcpServer.h"
 
 using namespace stcp;

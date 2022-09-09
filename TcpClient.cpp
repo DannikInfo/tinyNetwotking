@@ -1,3 +1,8 @@
+/**
+ * original author is:
+ * https://github.com/gbytegear/TcpServer
+ */
+
 #include "TcpClient.h"
 #include <stdio.h>
 #include <cstring>
