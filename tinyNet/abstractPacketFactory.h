@@ -4,9 +4,9 @@
 #include <iostream>
 #include "packet.h"
 
-class AbstractPacketFactory {
+class abstractPacketFactory {
 public:
-    virtual std::unique_ptr<packet> create(int packetID, nlohmann::json *data = NULL) = 0;
+    virtual std::unique_ptr<packet> create(int packetID, nlohmann::json &data) = 0;
 };
 
 #endif //ABSTRACTPACKETFACTORY_H

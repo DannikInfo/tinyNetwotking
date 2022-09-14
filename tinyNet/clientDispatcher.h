@@ -5,13 +5,14 @@
 #include "packet.h"
 #include <logger.h>
 #include <json.hpp>
-#include <AbstractPacketFactory.h>
+#include "abstractPacketFactory.h"
+#include "abstractNetworkHandler.h"
 
 class clientDispatcher : public dispatcher{
 private:
-    stcp::ThreadPool threadPool;
+    tcp::threadPool threadPool;
 public:
-    clientDispatcher(stcp::TcpClient &client, uint32_t server, int port, AbstractPacketFactory *pf);
+    clientDispatcher(tcp::client &client, const std::string &name, uint32_t server, int port, abstractPacketFactory *pf, abstractNetworkHandler *nh);
 };
 
 

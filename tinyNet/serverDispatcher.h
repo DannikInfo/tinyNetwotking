@@ -7,14 +7,18 @@
 #include "packet.h"
 #include <logger.h>
 #include <json.hpp>
-#include <AbstractPacketFactory.h>
+#include "abstractPacketFactory.h"
+#include "abstractNetworkHandler.h"
+
 
 class serverDispatcher : public dispatcher {
 private:
-    stcp::TcpServer server;
+    tcp::server server;
 public:
-    serverDispatcher(int port, const std::string &serverName, AbstractPacketFactory *pf, int idle = 1, int interval = 1, int pk_count = 1);
+    serverDispatcher(int port, const std::string &serverName, abstractPacketFactory *pf, abstractNetworkHandler *nh, int idle = 1, int interval = 1, int pk_count = 1);
 };
+
+
 
 
 #endif //TINYNETWORKING_SERVERDISPATCHER_H

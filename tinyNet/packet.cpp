@@ -27,3 +27,12 @@ void packet::setID(int id) {
 void packet::setDirection(packetDirection &direct) {
     this->direction = direct;
 }
+
+void packet::serialize() {
+    this->data["id"] = id;
+    this->data["timeSend"] = timeSend;
+}
+
+bool packet::isProcessed() {
+    return processed;
+}
