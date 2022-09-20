@@ -31,6 +31,7 @@ namespace tcp {
 
 #define SM_OK "OK"
 #define SM_END "END"
+#define SM_FAIL "FAIL"
 
 #ifdef _WIN32 // Windows NT
     typedef int sockLen_t;

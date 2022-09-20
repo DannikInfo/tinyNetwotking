@@ -87,6 +87,9 @@ inline int convertError() {
 
 #include <iostream>
 #include <logger.h>
+#include <json.hpp>
+
+int recDepth2;
 
 std::string serverClient::loadData() {
     if(_status != socketStatus::connected) return {};
@@ -101,7 +104,8 @@ std::string serverClient::loadData() {
         WIN(if(u_long t = false; SOCKET_ERROR == ioctlsocket(socket, FIONBIO, &t)) return std::string();)
         if (error(n, socket)) return {};
         if (strstr(reinterpret_cast<const char *>(sizeB), SM_OK) ||
-            strstr(reinterpret_cast<const char *>(sizeB), SM_END))
+            strstr(reinterpret_cast<const char *>(sizeB), SM_END) ||
+            strstr(reinterpret_cast<const char *>(sizeB), SM_FAIL))
             return {};
         int size = atoi(reinterpret_cast<const char *>(sizeB));
 
@@ -122,7 +126,7 @@ std::string serverClient::loadData() {
             int pieces = size/4096 + 1;
 
                 //sendSM(SM_OK, socket);
-                //logger::info("pieces: " + std::to_string(pieces));
+         //       logger::info("pieces: " + std::to_string(pieces));
 
                 //data receive
                 std::string received;
@@ -147,8 +151,20 @@ std::string serverClient::loadData() {
                     } while (strstr(data.c_str(), received.c_str()));
                     data += received;
                 }
-
-            receiveSM(SM_END, socket);
+                //logger::info("data received");
+                //if(receiveSM(SM_FAIL, socket)) return "";
+                try {
+                    nlohmann::json j = nlohmann::json::parse(data);
+                    if(!j.is_object()){
+                        sendSM(SM_FAIL, socket);
+                        return "";
+                    }
+                    receiveSM(SM_END, socket);
+                    sendSM(SM_OK, socket);
+                }catch(...){
+                    sendSM(SM_FAIL, socket);
+                    return "";
+                }
 //        }catch(...){}
 //    }
     //    sleep(1);
@@ -166,32 +182,42 @@ baseClient::status serverClient::disconnect() {
 }
 
 void serverClient::sendData(const std::string& data, size_t siz2e) {
+    recDepth2++;
+    int dataPieces = 1, n;
+    ulong size = data.length();
 
-//    int dataPieces = 1, n;
-//    int size = data.length();
-//    if(size > 4096)
-//        dataPieces = size/4096+1;
-//
-//    std::string strDataPieces = std::to_string(dataPieces);
-//    //data size
-//    n = send(socket, std::to_string(size).c_str(), std::to_string(size).length(), 0);
-//    if(error(n, socket)) return;
-//    if(!receiveSM(SM_OK, socket)) return;
-//
-//    //pieces count
-//    n = send(socket, strDataPieces.c_str(), strDataPieces.length(), 0);
-//    if(error(n, socket)) return;
-//    if(!receiveSM(SM_OK, socket)) return;
+    if(size > 4096)
+        dataPieces = (int)(size/4096)+1;
 
-//    std::string dataPiece;
-//    //data send
-//    for(int i = 0; i < dataPieces; i++) {
-//        dataPiece = data.substr(i*4096, (i+1)*4096);
-//        n = send(socket, dataPiece.c_str(), dataPiece.length(), 0);
-//        if(error(n, socket)) return;
-//        if(!receiveSM(SM_OK, socket)) return;
-//    }
-//    sendSM(SM_END, socket);
+    std::string strDataPieces = std::to_string(dataPieces);
+    //data size
+    n = send(socket, std::to_string(size).c_str(), std::to_string(size).length(), 0);
+    if(error(n, socket)) return;
+    receiveSM(SM_OK, socket);
+
+    //pieces count
+
+//    n = send(client_socket, strDataPieces.c_str(), strDataPieces.length(), 0);
+//    if(error(n, client_socket)) return;
+//    receiveSM(SM_OK, client_socket);
+//
+    std::string dataPiece;
+    //data send
+    for(int i = 0; i < dataPieces; i++) {
+        dataPiece = data.substr(i*4096, (i+1)*4096);
+        n = send(socket, dataPiece.c_str(), dataPiece.length(), 0);
+        if(error(n, socket)) return;
+        receiveSM(SM_OK, socket);
+    }
+    sendSM(SM_END, socket);
+    if(recDepth2 < 3) {
+        if (receiveSM(SM_FAIL, socket))
+            sendData(data, size);
+    }else {
+        sendSM(SM_FAIL, socket);
+        logger::error("Failed to send data with size: " + std::to_string(size));
+    }
+    recDepth2--;
 }
 
 serverClient::serverClient(sock socket, socketAddr_in address)

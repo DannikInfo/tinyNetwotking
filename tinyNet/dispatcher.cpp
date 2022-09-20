@@ -11,6 +11,7 @@ std::string dispatcher::getHostStr( tcp::baseClient &client) {
 }
 
 void dispatcher::receive(const std::string& data, tcp::baseClient &client) {
+    if(data.empty()) return;
     try {
         nlohmann::json j = nlohmann::json::parse(data);
         if(j["id"].get<int>() == -1)

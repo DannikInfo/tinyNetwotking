@@ -115,39 +115,42 @@ inline int convertError() {
         void sendSM(const char* sm, socket_t socket) {
             int n = send(socket, sm, sizeof(sm), 0);
             if(error(n, socket)) return;
-            //std::cout << "send " << sm << std::endl;
+           // std::cout << "send " << sm << std::endl;
         }
 
         bool receiveSM(const char* sm, socket_t socket) {
-            char *sizeB[1024];
-            bzero(sizeB, 1024);
+            int size = sizeof(sm);
+            char *smB[size];
+            bzero(smB, size);
             bool isReceived = false;
             long timeout = time(nullptr)+1;
-
-            while(!isReceived && timeout >= time(nullptr)) {
-               // logger::info(std::to_string(timeout) + " realTime: " + std::to_string(time(nullptr)));
+           // logger::warn("waiting: " + std::string(sm));
+            do {
+                //logger::info(std::to_string(timeout) + " realTime: " + std::to_string(time(nullptr)));
                 WIN(if (u_long t = true; SOCKET_ERROR == ioctlsocket(socket, FIONBIO, &t)) continue;)
-                int n = read(socket, sizeB, sizeof(sm));
+                int n = recv(socket, smB, size, 0);
                 WIN(if (u_long t = false; SOCKET_ERROR == ioctlsocket(socket, FIONBIO, &t)) continue;)
+                //std::cout << time(nullptr) << " rec " <<reinterpret_cast<const char *>(smB) << std::endl;
                 if (error(n, socket)) {
                     isReceived = false;
                     continue;
                 }
-                if (strstr(reinterpret_cast<const char *>(sizeB), sm)) {
-                    remove(reinterpret_cast<const char *>(sizeB));
+                if (strstr(reinterpret_cast<const char *>(smB), sm)) {
+                    remove(reinterpret_cast<const char *>(smB));
                     isReceived = true;
-                    //std::cout << time(nullptr) << " rec " <<reinterpret_cast<const char *>(sizeB) << std::endl;
+                  //  std::cout << time(nullptr) << " rec " << reinterpret_cast<const char *>(smB) << std::endl;
                     continue;
                 } else {
                     //logger::error("Expected '"+std::string(sm)+"', but received " + std::string(reinterpret_cast<const char *>(sizeB)));
-                    remove(reinterpret_cast<const char *>(sizeB));
                     isReceived = false;
                     continue;
                 }
-               // sleep(0.1);
-            }
 
-            return true;
+                //sleep(0.1);
+            }while(!isReceived && timeout >= time(nullptr));
+            //if(timeout < time(nullptr))
+           //     logger::warn("timeout receive answer!!");
+            return isReceived;
         }
 
         bool error(int n, socket_t socket){
@@ -173,11 +176,13 @@ inline int convertError() {
                     case 0: break;
                         // Keep alive timeout
                     case ETIMEDOUT:
-                       // logger::error("error socket! ETIMEDOUT");
+                        //logger::error("error socket! ETIMEDOUT");
                     case ECONNRESET:
-                       // logger::error("error socket! ECONNRESET");
+                        //logger::error("error socket! ECONNRESET");
+                        disconnect();
+                        [[fallthrough]];
                     case EPIPE:
-                       // logger::error("error socket! EPIPE");
+                        //logger::error("error socket! EPIPE");
                         disconnect();
                         [[fallthrough]];
                         // No data
