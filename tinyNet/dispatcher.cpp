@@ -11,12 +11,8 @@ std::string dispatcher::getHostStr( tcp::baseClient &client) {
 }
 
 void dispatcher::receive(const std::string& data, tcp::baseClient &client) {
-    std::string d;
-    for (const auto &item : data)
-        d += (char)item;
-
     try {
-        nlohmann::json j = nlohmann::json::parse(d);
+        nlohmann::json j = nlohmann::json::parse(data);
         if(j["id"].get<int>() == -1)
             return;
 
@@ -24,7 +20,7 @@ void dispatcher::receive(const std::string& data, tcp::baseClient &client) {
         std::unique_ptr<packet> packet = factory->create(j["id"].get<int>(), defJ);
 
         if(packet->getDirection() == packetDirection::SERVER || packet->getDirection() == packetDirection::UNIVERSAL)
-            packet->deserialize(d);
+            packet->deserialize(j);
 
         if(packet->isProcessed())
             networkHandler->handlePacket(packet, client);
@@ -42,7 +38,7 @@ void dispatcher::send(tcp::baseClient &client, std::unique_ptr<packet>& p) {
     p->setTimeSend(std::time(nullptr));
     p->serialize();
     std::string data = p->getData().dump();
-    client.sendData(data.c_str(), sizeof(data.c_str()));
+    client.sendData(data, sizeof(data.c_str()));
 }
 
 

@@ -11,6 +11,7 @@
 #include "abstractPacketFactory.h"
 #include "abstractNetworkHandler.h"
 
+
 class dispatcher {
 protected:
     std::string name;

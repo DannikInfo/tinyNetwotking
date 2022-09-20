@@ -55,7 +55,7 @@ public:
   uint16_t getPort() override;
   status getStatus()  override {return _status;}
 
-  std::string  loadData() override;
+  std::string loadData() override;
   const std::string&  loadDataSync();
   void setHandler(handler_function_t handler);
   void joinHandler();

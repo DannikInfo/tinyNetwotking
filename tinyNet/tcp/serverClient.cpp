@@ -89,57 +89,70 @@ inline int convertError() {
 #include <logger.h>
 
 std::string serverClient::loadData() {
-    if(_status != socketStatus::connected) return "";
+    if(_status != socketStatus::connected) return {};
     int n;
     //data size
     char *sizeB[1024];
-    n = recv(socket, sizeB, 1024, 0);
-    if (error(n, socket)) return "";
-    int size = atoi(reinterpret_cast<const char *>(sizeB));
     std::string data;
-    if(size > 0) {
-        sendSM(SM_OK, socket);
-       // logger::info("dataSize: " + std::to_string(size));
+    //while(!receiveSM(SM_END, socket)) {
+        bzero(sizeB, 1024);
+        WIN(if(u_long t = true; SOCKET_ERROR == ioctlsocket(socket, FIONBIO, &t)) return std::string();)
+        n = read(socket, sizeB, 1024);
+        WIN(if(u_long t = false; SOCKET_ERROR == ioctlsocket(socket, FIONBIO, &t)) return std::string();)
+        if (error(n, socket)) return {};
+        if (strstr(reinterpret_cast<const char *>(sizeB), SM_OK) ||
+            strstr(reinterpret_cast<const char *>(sizeB), SM_END))
+            return {};
+        int size = atoi(reinterpret_cast<const char *>(sizeB));
 
-        //pieces count
-        char *piecesB[1024];
-        n = recv(socket, piecesB, 1024, 0);
-        if (error(n, socket)) return "";
-        try {
-            int pieces = atoi(reinterpret_cast<const char *>(piecesB));
-            if(pieces > 0) {
-                sendSM(SM_OK, socket);
-                logger::info("pieces: " + std::to_string(pieces));
+        if(size > 0) {
+            sendSM(SM_OK, socket);
+           // logger::info("dataSize: " + std::to_string(size));
+//
+//          //pieces count
+//            char *piecesB[1024];
+//            bzero(piecesB, 1024);
+//            WIN(if(u_long t = true; SOCKET_ERROR == ioctlsocket(socket, FIONBIO, &t)) return "";)
+//            n = read(socket, piecesB, 1024);
+//            WIN(if(u_long t = false; SOCKET_ERROR == ioctlsocket(socket, FIONBIO, &t)) return "";)
+//            if (error(n, socket)) return "";
+//        try {
+//            int pieces = atoi(reinterpret_cast<const char *>(piecesB));
+//
+            int pieces = size/4096 + 1;
+
+                //sendSM(SM_OK, socket);
+                //logger::info("pieces: " + std::to_string(pieces));
 
                 //data receive
                 std::string received;
-                char *buffer[4096];
+                char *preBuffer[4096];
                 int readSize;
 
                 for (int i = 0; i < pieces; i++) {
-                    logger::info(std::to_string(i));
                     if (i + 1 == pieces)
                         readSize = size - 4096 * i;
                     else
                         readSize = 4096;
 
-                    bzero(buffer, 4096);
+                    bzero(preBuffer, 4096);
 
                     do {
-                        n = recv(socket, buffer, readSize, 0);
-                        if (error(n, socket)) return "";
-                        received = reinterpret_cast<char *const>(buffer);
+                        WIN(if(u_long t = true; SOCKET_ERROR == ioctlsocket(socket, FIONBIO, &t)) continue;)
+                        n = read(socket, preBuffer, readSize);
+                        WIN(if(u_long t = true; SOCKET_ERROR == ioctlsocket(socket, FIONBIO, &t)) continue;)
+                        if (error(n, socket)) return {};
                         sendSM(SM_OK, socket);
+                        received = reinterpret_cast<char *const>(preBuffer);
                     } while (strstr(data.c_str(), received.c_str()));
-                    logger::info(received);
                     data += received;
                 }
 
-                if (!receiveSM(SM_END, socket)) return "";
-            }
-        }catch(...){}
+            receiveSM(SM_END, socket);
+//        }catch(...){}
+//    }
+    //    sleep(1);
     }
-    //sleep(1);
     return data;
 }
 
@@ -153,31 +166,32 @@ baseClient::status serverClient::disconnect() {
 }
 
 void serverClient::sendData(const std::string& data, size_t siz2e) {
-    int dataPieces = 1, n;
-    int size = data.length();
-    if(size > 4096)
-        dataPieces = size/4096+1;
 
-    std::string strDataPieces = std::to_string(dataPieces);
-    //data size
-    n = send(socket, std::to_string(size).c_str(), std::to_string(size).length(), 0);
-    if(error(n, socket)) return;
-    if(!receiveSM(SM_OK, socket)) return;
+//    int dataPieces = 1, n;
+//    int size = data.length();
+//    if(size > 4096)
+//        dataPieces = size/4096+1;
+//
+//    std::string strDataPieces = std::to_string(dataPieces);
+//    //data size
+//    n = send(socket, std::to_string(size).c_str(), std::to_string(size).length(), 0);
+//    if(error(n, socket)) return;
+//    if(!receiveSM(SM_OK, socket)) return;
+//
+//    //pieces count
+//    n = send(socket, strDataPieces.c_str(), strDataPieces.length(), 0);
+//    if(error(n, socket)) return;
+//    if(!receiveSM(SM_OK, socket)) return;
 
-    //pieces count
-    n = send(socket, strDataPieces.c_str(), strDataPieces.length(), 0);
-    if(error(n, socket)) return;
-    if(!receiveSM(SM_OK, socket)) return;
-
-    std::string dataPiece;
-    //data send
-    for(int i = 0; i < dataPieces; i++) {
-        dataPiece = data.substr(i*4096, (i+1)*4096);
-        n = send(socket, dataPiece.c_str(), dataPiece.length(), 0);
-        if(error(n, socket)) return;
-        if(!receiveSM(SM_OK, socket)) return;
-    }
-    sendSM(SM_END, socket);
+//    std::string dataPiece;
+//    //data send
+//    for(int i = 0; i < dataPieces; i++) {
+//        dataPiece = data.substr(i*4096, (i+1)*4096);
+//        n = send(socket, dataPiece.c_str(), dataPiece.length(), 0);
+//        if(error(n, socket)) return;
+//        if(!receiveSM(SM_OK, socket)) return;
+//    }
+//    sendSM(SM_END, socket);
 }
 
 serverClient::serverClient(sock socket, socketAddr_in address)

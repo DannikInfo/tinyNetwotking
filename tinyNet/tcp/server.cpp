@@ -61,7 +61,7 @@ serverStatus server::start() {
   address.sin_family = AF_INET;
 
 
-  if((serv_socket = socket(AF_INET, SOCK_STREAM NIX(| SOCK_NONBLOCK), 0)) WIN(== INVALID_SOCKET)NIX(== -1))
+  if((serv_socket = socket(AF_INET, SOCK_STREAM, 0)) WIN(== INVALID_SOCKET)NIX(== -1))
      return _status = serverStatus::err_socket_init;
 
   // Set nonblocking accept
@@ -194,8 +194,8 @@ void server::waitingDataLoop() {
       auto& client = *it;
       if(client){
         if(std::string data = client->loadData(); !data.empty()) {
-
           tPool.addJob([this, _data = std::move(data), &client]{
+
             client->access_mtx.lock();
             handler(_data, *client);
             client->access_mtx.unlock();

@@ -26,7 +26,7 @@ public:
     void setDirection(packetDirection &direct);
 
     virtual void serialize();
-    virtual void deserialize(std::string& data) = 0;
+    virtual void deserialize(nlohmann::json& data) = 0;
 
 
     virtual ~packet() {};

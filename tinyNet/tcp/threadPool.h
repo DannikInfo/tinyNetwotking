@@ -13,6 +13,7 @@
 #include <mutex>
 #include <condition_variable>
 #include <atomic>
+#include "logger.h"
 
 namespace tcp {
     class threadPool {

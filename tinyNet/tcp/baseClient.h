@@ -113,26 +113,46 @@ inline int convertError() {
         virtual socketType getType() = 0;
 
         void sendSM(const char* sm, socket_t socket) {
-            int n = send(socket, sm, strlen(sm), MSG_NOSIGNAL);
+            int n = send(socket, sm, sizeof(sm), 0);
             if(error(n, socket)) return;
+            //std::cout << "send " << sm << std::endl;
         }
 
         bool receiveSM(const char* sm, socket_t socket) {
             char *sizeB[1024];
-            int n = read(socket, sizeB, 1024);
-            if (error(n, socket)) return false;
-            if (strstr(reinterpret_cast<const char *>(sizeB), sm)) {
-                remove(reinterpret_cast<const char *>(sizeB));
-                return true;
-            }else {
-                logger::error("Expected '"+std::string(sm)+"', but received " + std::string(reinterpret_cast<const char *>(sizeB)));
-                remove(reinterpret_cast<const char *>(sizeB));
-                return false;
+            bzero(sizeB, 1024);
+            bool isReceived = false;
+            long timeout = time(nullptr)+1;
+
+            while(!isReceived && timeout >= time(nullptr)) {
+               // logger::info(std::to_string(timeout) + " realTime: " + std::to_string(time(nullptr)));
+                WIN(if (u_long t = true; SOCKET_ERROR == ioctlsocket(socket, FIONBIO, &t)) continue;)
+                int n = read(socket, sizeB, sizeof(sm));
+                WIN(if (u_long t = false; SOCKET_ERROR == ioctlsocket(socket, FIONBIO, &t)) continue;)
+                if (error(n, socket)) {
+                    isReceived = false;
+                    continue;
+                }
+                if (strstr(reinterpret_cast<const char *>(sizeB), sm)) {
+                    remove(reinterpret_cast<const char *>(sizeB));
+                    isReceived = true;
+                    //std::cout << time(nullptr) << " rec " <<reinterpret_cast<const char *>(sizeB) << std::endl;
+                    continue;
+                } else {
+                    //logger::error("Expected '"+std::string(sm)+"', but received " + std::string(reinterpret_cast<const char *>(sizeB)));
+                    remove(reinterpret_cast<const char *>(sizeB));
+                    isReceived = false;
+                    continue;
+                }
+               // sleep(0.1);
             }
+
+            return true;
         }
 
         bool error(int n, socket_t socket){
             int err;
+            //logger::info(strerror(errno));
             if(!n) {
                 disconnect();
                 return true;
