@@ -18,22 +18,23 @@ void dispatcher::receive(const std::string& data, tcp::baseClient &client) {
             return;
 
         nlohmann::json defJ;
-        std::unique_ptr<packet> packet = factory->create(j["id"].get<int>(), defJ);
+        std::unique_ptr<packet> p = factory->create(j["id"].get<int>(), defJ);
 
-        if(packet->getDirection() == packetDirection::SERVER || packet->getDirection() == packetDirection::UNIVERSAL)
-            packet->deserialize(j);
+        if(p->getDirection() == packetDirection::SERVER || p->getDirection() == packetDirection::UNIVERSAL)
+            p->deserialize(j);
 
-        if(packet->isProcessed())
-            networkHandler->handlePacket(packet, client);
+        if(p->isProcessed())
+            networkHandler->handlePacket(p, client);
 
-        if(packet->getDirection() == packetDirection::UNIVERSAL && !j["answer"])
-            send(client, packet);
+        if(p->getDirection() == packetDirection::UNIVERSAL && !j["answer"])
+            send(client, p);
 
     }catch(nlohmann::detail::parse_error &pe){
         logger::error(pe.what());
         return;
     }
 }
+
 
 void dispatcher::send(tcp::baseClient &client, std::unique_ptr<packet>& p) {
     p->setTimeSend(std::time(nullptr));
